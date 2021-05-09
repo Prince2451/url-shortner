@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Url Shortner</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+      }
+      .middle-content {
+        display: grid;
+        width: 100vw;
+        margin-top: 5rem;
+        justify-items: center;
+      }
+      .middle-content > div {
+        width: 50%;
+        min-width: 200px;
+        max-width: 600px;
+      }
+      .middle-content .nodejs {
+        height: 15rem;
+        display: block;
+        margin: auto;
+      }
+      #form {
+        margin-top: 1.25rem;
+        display: grid;
+        gap: 0.5rem;
+      }
+      form > div {
+        width: 100%;
+        display: flex;
+      }
+      form input {
+        width: 80%;
+        margin: 0 5px 0 0;
+      }
+      form button {
+        padding: 0.5rem 1rem;
+        border: none;
+        background-color: #5cac47;
+        border: 2px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        width: 50%;
+        max-width: 200px;
+      }
+      .url-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .short_url {
+        text-decoration: none;
+        color: #5cac5c;
+        cursor: pointer;
+      }
+      .short_url:hover {
+        text-decoration: underline;
+      }
+      .qrcode_url {
+        display: block;
+        width: 50%;
+        margin-right: -1.8rem;
+      }
+      .qrcode {
+        width: 100%;
+        /* for covering image outer white portion */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="middle-content">
+      <div>
+        <img
+          class="nodejs"
+          src="/public/nodejs-new-pantone-black.svg"
+          alt="Nodejs"
+        />
+        <form id="form">
+          <label for="url"> Enter URL </label>
+          <div>
+            <input type="text" placeholder="Enter Url" name="url" id="url" />
+            <button type="submit">Get URL</button>
+          </div>
+        </form>
+      </div>
+      <div class="url-container">
+        <span class="short_url"></span>
+        <a
+          href="#"
+          class="qrcode_url"
+          title="Click to download QR code"
+          download
+        ></a>
+      </div>
+    </div>
+    <script>
+      const form = document.getElementById("form");
+      const shortUrl = document.querySelector(".short_url");
+
+      shortUrl.addEventListener("click", copyUrl);
+      form.addEventListener("submit", getShortURl);
+
+      function copyUrl() {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shortUrl.textContent);
+          return window.alert("Url Copied");
+        } else {
+          window.open(shortUrl.textContent, "_blank");
+        }
+      }
+
+      function getShortURl(e) {
+        e.preventDefault();
+        let xhr = new XMLHttpRequest();
+        xhr.open("post", "/get-short-url");
+        xhr.setRequestHeader("content-type", "application/json");
+        xhr.onload = function (e) {
+          if (xhr.status >= 400) {
+            return window.alert(JSON.parse(xhr.response));
+          }
+          const shortURL = document.querySelector(".short_url");
+          const qrcodeURL = document.querySelector(".qrcode_url");
+
+          let qrcode = document.querySelector(".qrcode");
+          const content = JSON.parse(xhr.response);
+          if (!qrcode) {
+            qrcode = document.createElement("img");
+            qrcode.classList.add("qrcode");
+            qrcodeURL.appendChild(qrcode);
+          }
+          qrcodeURL.href = content.qrcode;
+          qrcode.src = content.qrcode;
+          shortURL.textContent = content.shortUrl;
+        };
+        xhr.onerror = function () {
+          window.alert("Something went wrong");
+        };
+        xhr.send(
+          JSON.stringify({
+            url: e.target.elements.url.value,
+          })
+        );
+      }
+    </script>
+  </body>
+</html>
